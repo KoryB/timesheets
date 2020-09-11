@@ -1,0 +1,47 @@
+{
+
+  "manifest_version": 2,
+  "name": "CY Timesheet Entering",
+  "version": "0.0.1",
+
+  "description": "Automatically transfer hours from Workday into OnCorps",
+  
+  "permissions": [
+    "<all_urls>",
+    "tabs"
+  ],
+
+
+  "icons": {
+    "48": "icons/timesheet-48.png",
+    "96": "icons/timesheet-96.png"
+  },
+  
+  
+  "background": {
+    "scripts": ["timesheet.js"]
+  },
+  
+  "browser_action": {
+    "default_icon": {
+      "18": "button/timesheet-18.svg"
+    },
+  
+    "default_title": "Transfer Timesheet",
+    "default_popup": "popup/popup.html"
+  },
+
+
+  "content_scripts": [
+    {
+      "matches": ["*://wd5.myworkday.com/cityyear/*"],
+      "js": ["jquery.js", "workday.js"]
+    },
+    
+    {
+      "matches": ["*://secure.oncorpsreports.com/OnCorpsNET_PY12/pages/timesheets/*"],
+      "js": ["jquery.js", "oncorps.js"]
+    }
+  ]
+
+}
