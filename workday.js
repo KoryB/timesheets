@@ -38,7 +38,7 @@ function queueBoxes(message) {
 }
 
 function clickCurrentBox(message) {
-  let boxes = $("div.WKOC[data-automation-id='calendarevent']").toArray().sort();
+  let boxes = $("div[data-automation-id='calendarevent'][data-automation-appointment-style='approved']").toArray().sort();
   let box = boxes[boxIndex++];
   
   console.log("found boxes:", boxes);

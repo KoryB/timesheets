@@ -18,6 +18,11 @@ function validateWorkdayResponse(response) {
     validationResponse.messages.push(`Invalid type: ${response.type}`);
   }
   
+  if (Number.isNaN(response.hours)) {
+    validationResponse.valid = false;
+    validationResponse.messages.push("Invalid parse, hours cannot be NaN");
+  }
+  
   return validationResponse;
 }
 
@@ -50,6 +55,8 @@ async function readWorkdayPopup(tab) {
       break;
     }
   }
+  
+  console.log(response);
 
   return Promise.resolve(response);
 }
@@ -129,12 +136,15 @@ function transferAllBoxes() {
               
               notifyOncorps(message);
             })
-            .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}));
+            .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}))
+            .catch(() => {});
             
           } while (numBoxesLeft > 0)
         });
       }
     });
+    
+  return Promise.resolve();
 }
 
 
@@ -153,5 +163,10 @@ function testAutoClick() {
         .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}));
       }
     });
+}
+
+
+function helloWorld() {
+  console.log("Hello World!");
 }
 
