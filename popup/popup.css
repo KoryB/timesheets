@@ -1,5 +1,9 @@
-html, body {
-  width: 100px;
+body, html {
+  width: 200px;
+}
+
+p {
+  width: 200px;
 }
 
 .hidden {
@@ -7,7 +11,7 @@ html, body {
 }
 
 .button {
-  margin: 3% auto;
+  margin: 5% auto;
   padding: 4px;
   text-align: center;
   font-size: 1.5em;

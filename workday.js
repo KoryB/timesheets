@@ -24,6 +24,8 @@ function notify(message) {
       return closePopup(message);
     case "is-popup-open":
       return isPopupOpen(message);
+    case "get-dates":
+      return getDates(message);
     default:
       break;
   }
@@ -105,5 +107,22 @@ function readTimeBlockPopup(message) {
   let comment = $("label:contains('Comment')").parent().next().text();
   
   return Promise.resolve({date, type, hours, comment});
+}
+
+
+function getDates(message) {
+  console.log("Enter getDates");
+  
+  let dates = $("div.day-cell[data-automation-id^='dayCell']")
+    .get()
+    
+  console.log({dates});
+  
+  dates = dates
+    .map(date => date.textContent)
+    .filter(text => text.includes("/"))
+    .map(text => text.split(' ')[1])
+    
+    return Promise.resolve(dates);
 }
 

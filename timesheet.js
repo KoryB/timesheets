@@ -7,6 +7,35 @@ function delay(ms) {
 }
 
 
+function validateTabs() {
+  return browser.tabs.query({status: "complete"})
+    .then(tabs => new Promise((resolve, reject) => {      
+      let titles = tabs.map((tab) => tab.title);
+      let workdayRegex = /.*- Workday/g;
+      let oncorpsRegex = /OnCorps(.|\n)*Americorps - OhioExtranet(.|\n)*/g;
+      
+      let validationResponse = {
+        valid: true,
+        messages: []
+      };
+      
+      console.log(`Found tabs ${titles}`);
+      
+      if (!titles.some((title) => workdayRegex.test(title))) {
+          validationResponse.valid = false,
+          validationResponse.messages.push("You must have the workday time entering page open");
+      }
+      
+      if (!titles.some((title) => oncorpsRegex.test(title))) {
+          validationResponse.valid = false,
+          validationResponse.messages.push("You must have the oncorps time entering page open");
+      }
+      
+      resolve(validationResponse);
+    }));
+}
+
+
 function validateWorkdayResponse(response) {
   var validationResponse = {
     valid: true,
@@ -26,18 +55,22 @@ function validateWorkdayResponse(response) {
   return validationResponse;
 }
 
-function convertWorkdayResponse(response) {
-  function convertDate(response) {
-    let date = response.date;
-    let month = months[parseInt(date.split("/")[0])];
-    let day = date.split("/")[1];
-    
-    return `${month} ${day}`;
-  }
+
+function convertWorkdayDate(response) {
+  let date = response.date;
+  let month = months[parseInt(date.split("/")[0])];
+  let dayInt = date.split("/")[1];
+  let day = dayInt.padStart(2, "0");
   
-  response.date = convertDate(response);
+  return `${month} ${day}`;
+}
+
+
+function convertWorkdayResponse(response) {
+  response.date = convertWorkdayDate(response);
   response.hours = parseFloat(response.hours);
   response.initialComment = "PD with teacher";
+  response.command = "record-hours";
                   
   return response;
 }
@@ -87,7 +120,7 @@ function notifyOncorps(message) {
     return;
   }
   
-  browser.tabs.query({title: "OnCorps*Americorps - OhioExtranet*"})
+  return browser.tabs.query({title: "OnCorps*Americorps - OhioExtranet*"})
     .then(function(tabs) {
       for (let tab of tabs) {        
         console.log("Notifying Oncorps Tab: ", message);
@@ -114,59 +147,94 @@ function transferDay() {
 
 
 function transferAllBoxes() {
-  browser.tabs.query({title: "*- Workday"})
-    .then(function(tabs) {
-      for (let tab of tabs) {
-        console.log("Notifying Workday Tab");
-        
-        browser.tabs.sendMessage(tab.id, {command: "queue-boxes"})
-        .then(async () => {
-          let numBoxesLeft = 0;
-          
-          do {
-            numBoxesLeft = await 
-              delay(2000)
-              .then(() => {
-                return browser.tabs.sendMessage(tab.id, {command: "click-current-box"})
-              });
-            
-            await readWorkdayPopup(tab)
-            .then((response) => {
-              let message = convertWorkdayResponse(response);
-              
-              notifyOncorps(message);
-            })
-            .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}))
-            .catch(() => {});
-            
-          } while (numBoxesLeft > 0)
-        });
-      }
-    });
+  console.log("Starting transferAllBoxes");
+  
+  return validateTabs().then(response => new Promise( (resolve, reject) => {
+    if (!response.valid) {
+      reject(response.messages);
+    } 
     
-  return Promise.resolve();
-}
-
-
-function testAutoClick() {
-  browser.tabs.query({title: "*- Workday"})
+    resolve();
+  }))
+  .then(() => new Promise( (resolve, reject) => {
+    browser.tabs.query({title: "*- Workday"})
     .then(function(tabs) {
-      for (let tab of tabs) {
-        console.log("Notifying Workday Tab");
+      let tab = tabs[0];
+      console.log("Notifying Workday Tab");
+      
+      browser.tabs.sendMessage(tab.id, {command: "queue-boxes"})
+      .then(async () => {
+        let numBoxesLeft = 0;
         
-        browser.tabs.sendMessage(tab.id, {command: "queue-boxes"})
-        .then(() => browser.tabs.sendMessage(tab.id, {command: "click-current-box"}))
-        .then(() => readWorkdayPopup(tab))
-        .then(response => {
-          console.log(response);
-        })
-        .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}));
-      }
+        do {
+          numBoxesLeft = await 
+            delay(2000)
+            .then(() => {
+              return browser.tabs.sendMessage(tab.id, {command: "click-current-box"})
+            });
+          
+          await readWorkdayPopup(tab)
+          .then((response) => {
+            let message = convertWorkdayResponse(response);
+            
+            notifyOncorps(message);
+          })
+          .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}))
+          .catch(() => {});
+          
+        } while (numBoxesLeft > 0)
+      })
+      .then(resolve);
     });
+  }));
 }
 
 
-function helloWorld() {
-  console.log("Hello World!");
+function clearAllBoxes() {
+  console.log("Clearing boxes");
+  
+  return validateTabs().then(response => new Promise( (resolve, reject) => {
+    if (!response.valid) {
+      reject(response.messages);
+    } 
+    
+    resolve();
+  }))
+  .then(() => new Promise( (resolve, reject) => {
+    browser.tabs.query({title: "*- Workday"})
+    .then(function(tabs) {
+      let tab = tabs[0];
+      console.log("Notifying Workday Tab");
+      
+      browser.tabs.sendMessage(tab.id, {command: "get-dates"})
+      .then(async (dates) => {
+        console.log(`Found dates: ${dates}`);
+        
+        for (let date of dates) {
+          let message = {date: convertWorkdayDate({date}), command: "clear-hours"}
+          
+          await browser.tabs.query({title: "OnCorps*Americorps - OhioExtranet*"})
+          .then(function(tabs) {
+            for (let tab of tabs) {        
+              console.log("Notifying Oncorps Tab: ", message);
+              browser.tabs.sendMessage(tab.id, message);
+            }
+          });
+        }
+      })
+    })
+  }))
 }
+
+
+browser.runtime.onMessage.addListener((message) => {
+  switch (message) {
+    case "transfer-all-boxes":
+      return transferAllBoxes();
+    case "clear-all-boxes":
+      return clearAllBoxes();
+    default:
+      break;
+  }
+});
 

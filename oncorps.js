@@ -1,5 +1,18 @@
 browser.runtime.onMessage.addListener(notify);
 
+
+function notify(message) {
+  switch (message.command) {
+    case "record-hours":
+      return recordHours(message);
+    case "clear-hours":
+      return clearHours(message);
+    default:
+      break;
+  }
+}
+
+
 function getHoursInput(row, type) {
   let hoursIndex = type.includes("Service")
     ? 2
@@ -36,8 +49,8 @@ function writeEntry({hoursInput, commentTextArea}, {hours, comment, initialComme
 }
 
 
-function notify({date, type, hours, comment, initialComment}) {
-  console.log("Received Message: ", {date, type, hours, comment, initialComment});
+function recordHours({date, type, hours, comment, initialComment}) {
+  console.log("Enter recordHours... args: ", {date, type, hours, comment, initialComment});
   
   let inputRow = $(`span:contains(${date})`).parent().parent();
   let commentTextArea = inputRow.next().children().eq(1).children("textarea");
@@ -46,4 +59,19 @@ function notify({date, type, hours, comment, initialComment}) {
   let hoursInput = getHoursInput(row, type);
   
   writeEntry({hoursInput, commentTextArea}, {hours, comment, initialComment});
+}
+
+
+function clearHours({date}) {
+  console.log("Enter clearHours... args: ", {date});
+  
+  let inputRow = $(`span:contains(${date})`).parent().parent();
+  let commentTextArea = inputRow.next().children().eq(1).children("textarea");
+  let hoursInputs = inputRow.find("input");
+  
+  console.log(commentTextArea)
+  console.log(hoursInputs)
+  
+  commentTextArea.text("");
+  hoursInputs.val("");
 }
