@@ -20,6 +20,8 @@ function listenForClicks() {
       .then(() => changeMessage("Successfully cleared!"))
       .catch(error => changeMessage(error));
     }
+    
+    window.close();
   });
 }
 

@@ -67,11 +67,10 @@ function clearHours({date}) {
   
   let inputRow = $(`span:contains(${date})`).parent().parent();
   let commentTextArea = inputRow.next().children().eq(1).children("textarea");
-  let hoursInputs = inputRow.find("input");
   
-  console.log(commentTextArea)
-  console.log(hoursInputs)
+  let row = inputRow.children();
   
   commentTextArea.text("");
-  hoursInputs.val("");
+  row.eq(1).children().val("");
+  row.eq(2).children().val("");
 }
