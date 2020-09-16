@@ -1,8 +1,8 @@
 {
 
   "manifest_version": 2,
-  "name": "CY Timesheet Entering",
-  "version": "0.0.1",
+  "name": "CY Timesheet Transferring",
+  "version": "0.1.0",
 
   "description": "Automatically transfer hours from Workday into OnCorps",
   
