@@ -67,6 +67,8 @@ function convertWorkdayDate(response) {
 
 
 function convertWorkdayResponse(response) {
+  console.log("enter convertWorkdayResponse", response);
+  
   response.date = convertWorkdayDate(response);
   response.hours = parseFloat(response.hours);
   response.initialComment = "PD with teacher";
@@ -160,35 +162,49 @@ function transferAllBoxes() {
     browser.tabs.query({title: "*- Workday"})
     .then(function(tabs) {
       let tab = tabs[0];
-      console.log("Notifying Workday Tab");
+      let transfer = tab.title.includes("Review Time by Week") ? transferAllBoxesByWeek : transferAllBoxesIndividually;
       
-      browser.tabs.sendMessage(tab.id, {command: "queue-boxes"})
-      .then(async () => {
-        let numBoxesLeft = 0;
-        
-        do {
-          numBoxesLeft = await 
-            delay(2000)
-            .then(() => {
-              return browser.tabs.sendMessage(tab.id, {command: "click-current-box"})
-            });
-          
-          await readWorkdayPopup(tab)
-          .then((response) => {
-            let message = convertWorkdayResponse(response);
-            
-            notifyOncorps(message);
-          })
-          .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}))
-          .catch(() => {});
-          
-        } while (numBoxesLeft > 0)
-      })
+      console.log("Notifying Workday Tab");
+      transfer(tab)      
       .then(resolve);
     });
   }));
 }
 
+function transferAllBoxesIndividually(tab) {
+  return browser.tabs.sendMessage(tab.id, {command: "queue-boxes"})
+    .then(async () => {
+      let numBoxesLeft = 0;
+      
+      do {
+        numBoxesLeft = await 
+          delay(2000)
+          .then(() => {
+            return browser.tabs.sendMessage(tab.id, {command: "click-current-box"})
+          });
+        
+        await readWorkdayPopup(tab)
+        .then((response) => {
+          let message = convertWorkdayResponse(response);
+          
+          notifyOncorps(message);
+        })
+        .then(() => browser.tabs.sendMessage(tab.id, {command: "close-popup"}))
+        .catch(() => {});
+        
+      } while (numBoxesLeft > 0)
+    });
+}
+
+function transferAllBoxesByWeek(tab) {
+  return browser.tabs.sendMessage(tab.id, {command: "read-table"})
+  .then(table => {
+    for (let row of table) {
+      let message = convertWorkdayResponse(row);
+      notifyOncorps(message)
+    }
+  });
+}
 
 function clearAllBoxes() {
   console.log("Clearing boxes");

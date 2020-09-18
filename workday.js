@@ -26,6 +26,8 @@ function notify(message) {
       return isPopupOpen(message);
     case "get-dates":
       return getDates(message);
+    case "read-table":
+      return readTable(message);
     default:
       break;
   }
@@ -126,3 +128,23 @@ function getDates(message) {
     return Promise.resolve(dates);
 }
 
+
+function readTable(message) {
+  let rows = $("table.mainTable").children("tbody").children("tr");
+  let responses = [];
+  
+  rows.each((i) => {
+    responses.push(readTableRow(rows.eq(i).children()));
+  });
+  
+  return Promise.resolve(responses);
+}
+
+function readTableRow(row) {
+  let date = row.eq(0).text().split(",")[1];
+  let type = row.eq(2).text();
+  let hours = row.eq(3).text();
+  let comment = row.eq(6).children().eq(0).children().eq(0).html().replace(/<br>/g, "\n")
+  
+  return {date, type, hours, comment};
+}
