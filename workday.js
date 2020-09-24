@@ -114,18 +114,31 @@ function readTimeBlockPopup(message) {
 
 function getDates(message) {
   console.log("Enter getDates");
+  console.log("Title", document.title);
   
-  let dates = $("div.day-cell[data-automation-id^='dayCell']")
-    .get()
+  let dates = []
+  
+  if (document.title.includes("Review Time by Week")) {
+    $('table.mainTable tbody tr td:nth-child(1)').each( function(){
+       //add item to array
+       dates.push( $(this).text() );       
+    });
+    
+    dates = $.unique(dates)
+      .map(text => text.split(' ')[1])
+    
+    console.log(dates);
+  } else {
+    dates = $("div.day-cell[data-automation-id^='dayCell']")
+      .get()
+      .map(date => date.textContent)
+      .filter(text => text.includes("/"))
+      .map(text => text.split(' ')[1])
+  }
     
   console.log({dates});
   
-  dates = dates
-    .map(date => date.textContent)
-    .filter(text => text.includes("/"))
-    .map(text => text.split(' ')[1])
-    
-    return Promise.resolve(dates);
+  return Promise.resolve(dates);
 }
 
 

@@ -7,6 +7,17 @@ function delay(ms) {
 }
 
 
+function createNotification(message) {
+  console.log('creating notification', message);
+  browser.notifications.create("notification", {
+    "type": "basic",
+    "iconUrl": browser.runtime.getURL("icons/timesheet-96.png"),
+    "title": "CY Timesheet Transferring",
+    "message": message
+  });
+}
+
+
 function validateTabs() {
   return browser.tabs.query({status: "complete"})
     .then(tabs => new Promise((resolve, reject) => {      
@@ -45,6 +56,10 @@ function validateWorkdayResponse(response) {
   if (invalidTypes.includes(response.type)) {
     validationResponse.valid = false;
     validationResponse.messages.push(`Invalid type: ${response.type}`);
+    
+    if (response.type === "Paid Holiday") {
+      createNotification(`WARNING: Paid holidays must be entered manually. In the comment box for ${response.date} type "Paid Holiday - <holiday name>"`);
+    }
   }
   
   if (Number.isNaN(response.hours)) {
@@ -159,7 +174,7 @@ function transferAllBoxes() {
     resolve();
   }))
   .then(() => new Promise( (resolve, reject) => {
-    browser.tabs.query({title: "*- Workday"})
+    browser.tabs.query({title: "Review Time by Week - Workday"})
     .then(function(tabs) {
       let tab = tabs[0];
       let transfer = tab.title.includes("Review Time by Week") ? transferAllBoxesByWeek : transferAllBoxesIndividually;
@@ -211,6 +226,7 @@ function clearAllBoxes() {
   
   return validateTabs().then(response => new Promise( (resolve, reject) => {
     if (!response.valid) {
+      createNotification(response.messages.join(" "));
       reject(response.messages);
     } 
     

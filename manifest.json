@@ -8,6 +8,7 @@
   
   "permissions": [
     "<all_urls>",
+    "notifications",
     "tabs"
   ],
 
@@ -19,7 +20,7 @@
   
   
   "background": {
-    "scripts": ["timesheet.js"]
+    "scripts": ["browser-polyfill.js", "timesheet.js"]
   },
   
   "browser_action": {
@@ -35,12 +36,12 @@
   "content_scripts": [
     {
       "matches": ["*://wd5.myworkday.com/cityyear/*"],
-      "js": ["jquery.js", "workday.js"]
+      "js": ["browser-polyfill.js", "jquery.js", "workday.js"]
     },
     
     {
       "matches": ["*://secure.oncorpsreports.com/OnCorpsNET_PY12/pages/timesheets/*"],
-      "js": ["jquery.js", "oncorps.js"]
+      "js": ["browser-polyfill.js", "jquery.js", "oncorps.js"]
     }
   ]
 
