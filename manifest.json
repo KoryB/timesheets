@@ -25,7 +25,8 @@
   
   "browser_action": {
     "default_icon": {
-      "18": "button/timesheet-18.svg"
+      "18": "button/timesheet-18.svg",
+      "16": "button/timesheet-18.png"
     },
   
     "default_title": "Transfer Timesheet",

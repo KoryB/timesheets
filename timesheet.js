@@ -236,7 +236,7 @@ function clearAllBoxes() {
     browser.tabs.query({title: "*- Workday"})
     .then(function(tabs) {
       let tab = tabs[0];
-      console.log("Notifying Workday Tab");
+      console.log("Notifying Workday Tab", tab);
       
       browser.tabs.sendMessage(tab.id, {command: "get-dates"})
       .then(async (dates) => {
